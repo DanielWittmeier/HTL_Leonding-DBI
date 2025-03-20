@@ -1,0 +1,205 @@
+/* Übung 4
+*/
+
+/*
+6. Ausgabe von SpielerNr und Name des ältesten Spielers aus Stratford
+*/
+
+SELECT * FROM players;
+
+
+select min(year_of_birth) from players;
+
+select * from players where year_of_birth = 
+( 
+    select min(year_of_birth) from players -- Sub query
+    where town = 'Stratford' -- Filter um das Jahr des ältesten Spielers aus Stratford zu bekommen
+)
+and town = 'Stratford'; -- Filter um die Stadt dann noch zu Filtern, da 2 Spieler aus dem selben Jahr kommen könnten.
+
+/*
+7. Gesucht sind alle Abteilungen, die keine Mitarbeiter beschäftigen.
+*/
+
+select * from dept
+inner join emp on emp.deptno=dept.deptno;
+
+select *
+from dept left outer join emp on emp.deptno = dept.deptno
+where emp.deptno is null;
+
+--subquery
+
+select distinct deptno from emp;
+
+select * from dept where deptno not in ( select distinct deptno from emp );
+
+/*
+8. Gesucht sind alle Mitarbeiter, die den gleichen Job wie JONES haben
+*/
+
+select * from emp where ename = 'JONES';
+
+select * 
+from emp 
+where job = ( select JOB from emp where ename = 'JONES' );
+
+/*
+9. Anzeigen aller Mitarbeiter, die mehr verdienen als irgendein Mitarbeiter aus
+Abteilung 30
+*/
+
+select * from emp;
+
+select * from emp where deptno=30;
+
+select min(sal) from emp where deptno=30;
+
+select * 
+from emp 
+where sal > 
+( 
+    select min(sal) 
+    from emp 
+    where deptno=30 
+);
+
+/*
+10.Anzeigen aller Mitarbeiter, die mehr verdienen als jeder Mitarbeiter aus Abteilung
+30
+*/
+
+select * from emp where deptno = 30;
+
+select max(sal) from emp where deptno = 30;
+
+select *
+from emp
+where sal >
+(
+    select max(sal) 
+    from emp 
+    where deptno = 30
+);
+
+/*
+11.Anzeigen aller Mitarbeiter aus Abteilung 10, deren Job von keinem Mitarbeiter
+aus Abteilung 30 ausgeübt wird
+*/
+
+select distinct job from emp where deptno=30;
+
+select * from emp where deptno=10
+and job not in ( select job from emp where deptno=30 ); -- Distinct macht hier keinen Sinn, Ergebnis bleibt gleich.
+
+/*
+12.Gesucht sind die Mitarbeiterdaten (EMPNO, ENAME, JOB, SAL) des Mitarbeiters
+mit dem höchsten Gehalt
+*/
+
+select max(sal) from emp;
+
+select * from emp where sal = ( select max(sal) from emp );
+
+
+/*
+Uebung 05
+*/
+
+/*
+1. Anzahl der Neuzugänge pro Jahr
+*/
+
+select * from players;
+
+select count(*) from players;
+
+select year_joined from players;
+
+select year_joined, count(*) from players
+group by year_joined
+order by year_joined desc; -- desc absteigend sotieren
+
+select year_joined, count(*), min(year_of_birth) 
+from players
+group by year_joined
+order by year_joined desc; -- desc absteigend sotieren
+
+
+/*
+
+2. Anzahl und durchschnittliche Höhe der Strafen pro Spieler
+
+*/
+
+select * from players;
+
+select * from penalties;
+
+select *
+from players
+join penalties on penalties.playerno = players.playerno;
+
+select pl.playerno, pl.name, pl.initials, count(*) as "count", round(avg(pe.amount),2) as "avg"
+from players pl
+join penalties pe on pe.playerno = pl.playerno
+group by pl.playerno, pl.name, pl.initials
+order by pl.playerno, pl.name, pl.initials;
+
+/*
+3. Anzahl der Strafen für die Jahre vor 2003 pro Jahr
+*/
+
+select * from penalties;
+
+select to_char(pen_date,'YYYY') as Jahr, count(*)
+from penalties
+where to_char(pen_date,'YYYY') < 2003
+group by to_char(pen_date,'YYYY');
+
+/*
+4. In welchen Städten leben mehr als 4 Spieler
+*/
+
+select * from players;
+
+select town, count(*)
+from players
+group by town
+having count(*)>4;
+
+/*
+5. PLAYERNO derjenigen Spieler, deren Strafensumme über 150 liegt
+*/
+
+select playerno, sum(amount) 
+from penalties
+group by playerno
+having sum(amount) > 150;
+
+/*
+6. NAME und INITIALS derjenigen Spieler, die mehr als eine Strafe erhalten haben
+*/
+
+select * from penalties;
+
+select playerno, count(*)
+from penalties
+group by playerno;
+
+select pl.name, pl.initials, count(*)
+from players pl
+join penalties pe on pe.playerno = pl.playerno
+group by pl.name, pl.initials
+having count(*) > 1;
+
+/*
+7. In welchen Jahren gab es genau 2 Strafen
+*/
+
+select * from penalties;
+
+select to_char(pen_date,'YYYY'), count(*)
+from penalties
+group by to_char(pen_date,'YYYY')
+having count(*) = 2;

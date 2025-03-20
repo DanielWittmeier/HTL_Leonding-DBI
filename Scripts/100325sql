@@ -1,0 +1,157 @@
+/*
+2. Anzeigen der gesamten Hierarchie derjenigen Teile, aus denen P3 und P9
+bestehen
+SUB SUP PRICE
+--- --- ----------
+P10 P9 12
+P11 P9 21
+P12 P7 10
+P6 P3 10
+P7 P3 20
+P8 P3 25
+*/
+WITH PartCTE (SUB, SUPER, PRICE) AS (
+SELECT
+    sub, super, price
+    FROM parts
+    WHERE super in ('P3','P9')
+    
+UNION ALL
+SELECT parts.sub, parts.super, parts.price
+FROM parts
+JOIN PartCTE ON partcte.sub=parts.super
+    )
+    SELECT * FROM PartCTE;
+    
+/*
+3. An welcher Hierarchiestufe wird P12 in P1 verwendet
+SUB SUP LEVEL
+--- --- ----------
+P12 P7 3
+*/
+
+select * from parts;
+
+with partscte (sub, super, lvl) as
+(
+SELECT
+ sub, super, 0 lvl
+ from parts
+ WHERE sub = 'P1'
+ 
+ union all
+ 
+ SELECT
+ parts.sub, parts.super, partscte.lvl + 1
+ from parts
+ join partscte on partscte.sub = parts.super
+ 
+) 
+select * from partscte
+where sub = 'P12';
+
+/*
+4. Wie viele Teile zu P1 kosten mehr als $20
+ANZ_TEILE
+----------
+4
+*/
+
+
+select * from parts;
+
+
+with partscte (sub, super, price) as
+(
+SELECT
+ sub, super, price
+ from parts
+ WHERE super = 'P1'
+ 
+ union all
+ 
+ SELECT
+ parts.sub, parts.super, parts.price
+ from parts
+ join partscte on partscte.sub = parts.super
+ 
+) 
+select count(*) as ANZ_TEILE from partscte
+where price > 20;
+
+/*
+5. Ausgabe aller direkt und indirekt zu JONES gehörenden Mitarbeiter (ohne
+JONES selbst, mit entsprechender Einrückung pro Hierarchie)
+
+Hinweis: Spaltenbreite beschränken mit:
+COLUMN Mitarbeiter FORMAT A60
+MITARBEITER
+------------------------------------------------------------
+7788 SCOTT
+    7876 ADAMS
+7902 FORD
+    7369 SMITH
+*/
+
+
+WITH EMPCTE ( EMPNO, ENAME, mgr, lvl, displayname, path ) AS (
+SELECT EMPNO, ENAME, mgr, 0 lvl, to_char(empno) || ' ' || ename as displayname, to_char(empno) as path
+FROM EMP
+--WHERE mgr = ( select empno from emp where ename = 'JONES' )
+where ename = 'JONES'
+UNION ALL
+
+SELECT e.empno, e.ename, e.mgr, cte.lvl + 1 lvl, lpad(' ', 3 * lvl, ' ') || to_char(e.empno) || ' ' || e.ename as displayname,
+cte.path || '->' || to_char(e.empno) path
+FROM emp e
+JOIN EmpCTE cte on cte.empno = e.mgr
+)
+SELECT displayname FROM EMPCTE
+where lvl > 0
+order by path;
+
+
+/*
+Exkurs lpad
+*/
+select playerno, won, rpad('#', won, '*'), lpad('#', won, '*') from matches;
+
+/*
+6. Ausgabe aller direkten und indirekten Vorgesetzten von SMITH (inklusive
+SMITH)
+MITARBEITER
+------------------------------------------------------------
+7369 SMITH
+    7902 FORD
+        7566 JONES
+            7839 KING
+*/
+
+select * from emp;
+
+WITH EMPCTE ( empno, ename, mgr, lvl, path, displayname ) as (
+SELECT empno, ename, mgr, 1 lvl, to_char(empno) path, to_char(empno) || ' ' || to_char(ename) displayname
+from EMP
+Where ename = 'SMITH'
+UNION ALL
+
+SELECT emp.empno, emp.ename, emp.mgr, empcte.lvl + 1 lvl, empcte.path || '->' || to_char(emp.empno) path, lpad(' ', 9*empcte.lvl) || to_char(emp.empno) || ' ' || to_char(emp.ename) displayname
+FROM EMP
+JOIN EMPCTE on empcte.mgr = emp.empno
+)
+SELECT displayname FROM EMPCTE;
+
+
+/*
+7. Ausgabe des durchschnittlichen Gehalts für jede Hierarchiestufe
+AVG_SAL EBENE
+----------- ----------
+5,000.00 1
+2,758.00 2
+1,731.25 3
+950.00 4
+*/
+
+with empcte ( empno, mgr, lvl, path ) as (
+
+)

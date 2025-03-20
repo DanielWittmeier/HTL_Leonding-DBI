@@ -1,0 +1,92 @@
+/*
+9. Ausgabe derjenigen Mitarbeiter,
+die mehr Provision als Gehalt erhalten.
+*/
+
+select * from emp
+where comm > sal;
+
+/*
+10.Ausgabe aller Mitarbeiter aus Abteilung 30, deren Gehalt größer gleich
+1500,- ist.
+*/
+
+SELECT * FROM emp
+WHERE deptno = 30
+and sal >= 1500;
+
+--Exkurs: Gesamtgehalt ( SAL und COMM )
+-- FALSCH
+SELECT * FROM emp
+WHERE deptno = 30
+and (sal+comm) >= 1500;
+
+SELECT * FROM emp
+WHERE deptno = 30
+and (sal+nvl(comm,0)) >= 1500; -- mit nvl(Spalte,X), gibt man mit dem X den Wert an, der bei NULL verwendet werden soll
+
+/*
+11.Ausgabe aller Manager, die nicht zu Abteilung 30 gehören.
+*/
+
+-- Variante 1: JOB=MANAGER
+SELECT * FROM EMP
+WHERE job = 'MANAGER'
+and deptno <> 30;
+
+-- Variante 2: Manager = ist ein Vorgesetzter
+
+SELECT * FROM EMP;
+
+SELECT distinct m.empno, m.ename, m.deptno
+FROM EMP e
+join EMP m on m.empno = e.mgr
+where m.deptno <> 30;
+
+-- Umgedrehte Variante, DIE MANAGER werden jetzt links angezeigt
+SELECT *
+FROM EMP M
+JOIN EMP E ON e.mgr = m.empno;
+
+/*
+12.Ausgabe aller Mitarbeiter aus Abteilung 10, die weder Manager noch Büro-
+angestellter (CLERK) sind.
+*/
+
+SELECT * FROM EMP
+WHERE deptno=10
+and job NOT IN('CLERK', 'MANAGER'); -- Mit IN kann man mehrere Varianten angeben
+
+-- Variante Steuerungstabelle
+CREATE TABLE ExcludeJobs (
+    job VARCHAR2(9)
+);
+
+INSERT INTO ExcludeJobs VALUES ('CLERK'); 
+INSERT INTO ExcludeJobs VALUES ('MANAGER');
+
+SELECT * FROM EMP
+WHERE deptno=10
+and job NOT IN(SELECT job from ExcludeJobs); -- Mit IN kann man mehrere Varianten angeben
+----------------------------------------------------
+
+--Ohne Subselect
+
+SELECT * FROM EMP
+JOIN ExcludeJobs on emp.job <> ExcludeJobs.job
+WHERE deptno=10; -- OHNE ERGEBNIS
+
+/*
+13.Ausgabe aller Mitarbeiter, die zwischen 1200,- und 1300,- verdienen.
+*/
+SELECT * FROM EMP;
+
+--Variante 1 SAL
+
+SELECT * FROM EMP
+WHERE SAL >= 1200 and SAL <= 1300;
+
+-- Variante 2 SAL + COMM
+
+SELECT * FROM EMP
+WHERE (SAL+nvl(COMM,0)) >= 1200 and (SAL+nvl(COMM,0)) <= 1300;
